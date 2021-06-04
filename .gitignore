@@ -1,0 +1,7 @@
+bin
+cmake-build-debug
+output
+Tea_Set_Lefard
+.idea
+.DS_Store
+*/.DS_Store
