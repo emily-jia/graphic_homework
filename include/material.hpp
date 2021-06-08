@@ -6,9 +6,10 @@
 
 #include "ray.hpp"
 #include "hit.hpp"
+#include "Texture.h"
 #include <iostream>
 
-// TODO: Implement Shade function that computes Phong introduced in class.
+// TODO: add Texture.
 class Material {
 public:
 
@@ -49,6 +50,16 @@ public:
               diffuse = dot_ln > 0? dot_ln : 0;
         specular = specular > 0? specular: 0;
         specular = pow(specular, shininess);
+
+        Vector3f kd;
+        if(t.valid() && hit.hasTex){
+            Vector2f texCoord = hit.texCoord;
+            Vector3f texColor = t(texCoord[0],texCoord[1]);
+            kd = texColor;
+        }else{
+            kd = this->diffuseColor;
+        }
+
         Vector3f shaded = lightColor * (diffuse*diffuseColor + specular*specularColor);
         return shaded;
     }
@@ -61,6 +72,8 @@ protected:
     double n_out;  // 折射率
     Vector3f transmitColor;
     double transparency;
+
+    Texture t;
 };
 
 

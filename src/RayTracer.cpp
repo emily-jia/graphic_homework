@@ -5,6 +5,7 @@
 #include "RayTracer.h"
 #include "group.hpp"
 #include "light.hpp"
+
 #define EPSILON 1e-3
 
 inline double sq(double x) {
@@ -12,8 +13,7 @@ inline double sq(double x) {
 }
 
 // 计算反射方向
-Vector3f RayTracer::get_reflect_direction(const Vector3f &normal, const Vector3f &incoming)
-{
+Vector3f RayTracer::get_reflect_direction(const Vector3f &normal, const Vector3f &incoming) {
     return (incoming - 2 * Vector3f::dot(normal, incoming) * normal).normalized();
 }
 
@@ -21,17 +21,18 @@ Vector3f RayTracer::get_reflect_direction(const Vector3f &normal, const Vector3f
 /*
  * index_n, index_nt：折射率，根据折射定律 sin(入射) / sin(出射) = index_n / index_nt
  */
-bool RayTracer::get_refract_direction(const Vector3f &normal, const Vector3f &incoming, double index_n, double index_nt, Vector3f &transmitted)
+bool RayTracer::get_refract_direction(const Vector3f &normal, const Vector3f &incoming, double index_n, double index_nt,
+                                      Vector3f &transmitted)
 {
     if (index_nt < EPSILON)
         auto in = incoming.normalized(), norm = normal.normalized();
     double dot = Vector3f::dot(normal, incoming),
-        n_relative = index_n / index_nt,
-        cos_sq_angle_o = 1 - sq(n_relative) * (1 - sq(dot));
+            n_relative = index_n / index_nt,
+            cos_sq_angle_o = 1 - sq(n_relative) * (1 - sq(dot));
     if (cos_sq_angle_o < EPSILON)
         return false;
     Vector3f norm = normal.normalized(), in = incoming.normalized();
-    transmitted = norm * sqrt(cos_sq_angle_o) + (in - dot * norm) * n_relative;
+    transmitted = norm * sqrt(cos_sq_angle_o) + (in - dot * norm) * n_relative; //  * (dot>0? 1:-1)
     return true;
 }
 
@@ -43,8 +44,8 @@ Vector3f RayTracer::traceRay(Ray &ray, double tmin, int bounces, double refr_ind
 
     //计算光线与所有物体的交点中离start最近的点;
     bool interesect = group->intersect(ray, hit, tmin);
-    if(!interesect)
-        color = scene->getBackgroundColor();
+    if (!interesect)
+        color = scene->getBackgroundColor(ray.getDirection());
     else {
         Material *material = hit.getMaterial();
         const Vector3f &incoming = ray.getDirection(),
@@ -60,7 +61,7 @@ Vector3f RayTracer::traceRay(Ray &ray, double tmin, int bounces, double refr_ind
             local += material->Shade(ray, hit, L, lightColor);
         }
 
-        if(bounces == max_depth)
+        if (bounces == max_depth)
             return local;
 
         // 处理反射光
@@ -78,6 +79,8 @@ Vector3f RayTracer::traceRay(Ray &ray, double tmin, int bounces, double refr_ind
             refract_color = traceRay(refract_light, tmin, bounces + 1, n_out, h_);
         }
 
+        //std::cout<< " " << refract_color[0] << " " << refract_color[1] << " " << refract_color[2] << std::endl;
+
         double r;
         auto r0 = sq((n_out - refr_index) / (n_out + refr_index));
         double c = refr_index <= n_out ? Vector3f::dot(incoming, normal) : Vector3f::dot(refract_dir, normal);
@@ -86,7 +89,8 @@ Vector3f RayTracer::traceRay(Ray &ray, double tmin, int bounces, double refr_ind
         const Vector3f &transmit = material->getTransmitColor(),
                 &spec = material->getSpecularColor();
 
-        color = local + r * spec * reflect_color + (1 - r) * transmit * refract_color;
+        // color = local + r * spec * reflect_color + (1-r) * transmit * refract_color;
+        color = local + r * spec * reflect_color + (1-r) * refract_color;
     }
 
     return color;

@@ -48,10 +48,19 @@ public:
         normal = n;
     }
 
+    void set_texture(const Vector2f& tpos) {
+        hasTex = true;
+        texCoord = tpos;
+    }
+
 private:
     float t;
     Material *material;
     Vector3f normal;
+
+public:
+    bool hasTex = false;
+    Vector2f texCoord;
 
 };
 

@@ -47,14 +47,19 @@ bool Mesh::intersect(const Ray &r, Hit &h, float tmin) {
     bool result = false;
     for (int triId = 0; triId < (int) t.size(); ++triId) {
         TriangleIndex& triIndex = t[triId];
-        Triangle triangle(v[triIndex[0]],
-                          v[triIndex[1]], v[triIndex[2]], triIndex.material? triIndex.material:material, &n[triId]);
+        Triangle triangle(v[triIndex[0]],v[triIndex[1]], v[triIndex[2]],
+                          triIndex.material, &n[triId]);
+
+        if(!vt.empty()){
+            triangle.set_texture(vt[triIndex.f[0]], vt[triIndex.f[1]], vt[triIndex.f[2]]);
+        }
+
         result |= triangle.intersect(r, h, tmin);
     }
     return result;
 }
 
-Mesh::Mesh(const char *filename, Material *material) : Object3D(material) {
+Mesh::Mesh(const char *filename, Material *material) : Object3D(material), octree(Octree()) {
 
     // Optional: Use tiny obj loader to replace this simple one.
     std::ifstream f;
@@ -66,6 +71,8 @@ Mesh::Mesh(const char *filename, Material *material) : Object3D(material) {
 
     readObj(f);
     f.close();
+
+    octree.build(*this);
 }
 
 void Mesh::computeNormal() {
@@ -118,7 +125,7 @@ void Mesh::readObj(std::ifstream &f) {
             v.push_back(vec);  // 顶点坐标
         } else if (tok == fTok) { // face
             TriangleIndex trig;
-            trig.material = cur_mtl;
+            trig.material = cur_mtl? cur_mtl: material;
             std::string info;
             for (int ii = 0; ii < 3; ii++)
             {

@@ -9,11 +9,22 @@
 
 class Mesh;
 class Ray;
+class Hit;
 
 struct BoundingBox
 {
     Vector3f minium, maxium;
+    BoundingBox() = default;
     BoundingBox(const Vector3f& min, const Vector3f& max): minium(min), maxium(max) {}
+};
+
+struct IntersectInfo
+{
+    Mesh* m;
+    const Ray* ray;
+    Hit& hit;
+    double tm;
+    bool result;
 };
 
 struct OctTreeNode
@@ -35,6 +46,10 @@ class Octree {
 public:
     void build(const Mesh& mesh);
     void intersect(const Ray& ray);
+
+private:
+    OctTreeNode * build_node(std::vector<int>& ids, OctTreeNode* parent, const BoundingBox& box, const Mesh & mesh, int level);
+    static bool point_in_box(const BoundingBox& box, const Vector3f& point);
 };
 
 

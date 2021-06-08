@@ -16,6 +16,7 @@
 #include "transform.hpp"
 #include "curve.hpp"
 #include "revsurface.hpp"
+#include "CubeMap.h"
 
 #define DegreesToRadians(x) ((M_PI * x) / 180.0f)
 
@@ -30,6 +31,7 @@ SceneParser::SceneParser(const char *filename) {
     num_materials = 0;
     materials = nullptr;
     current_material = nullptr;
+    cube_map = nullptr;
 
     // parse the file
     assert(filename != nullptr);
@@ -165,6 +167,10 @@ void SceneParser::parseBackground() {
             break;
         } else if (!strcmp(token, "color")) {
             background_color = readVector3f();
+        } else if (!strcmp(token, "ambientLight")) {
+            ambient_light = readVector3f();
+        }else if(!strcmp(token,"cubeMap")){
+            cube_map = parseCubeMap();
         } else {
             printf("Unknown token in parseBackground: '%s'\n", token);
             assert(0);
@@ -644,4 +650,10 @@ int SceneParser::readInt() {
 Mesh *SceneParser::parseSceneGroup() {
     //TODO：读取mtl文件的纹理信息
     return nullptr;
+}
+
+CubeMap * SceneParser::parseCubeMap() {
+    char token[MAX_PARSER_TOKEN_LENGTH];
+    getToken(token);
+    return new CubeMap(token);
 }

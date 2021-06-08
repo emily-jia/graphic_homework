@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <vecmath.h>
+#include "CubeMap.h"
 
 class Camera;
 class Light;
@@ -31,8 +32,11 @@ public:
         return camera;
     }
 
-    Vector3f getBackgroundColor() const {
-        return background_color;
+    Vector3f getBackgroundColor(const Vector3f& dir) const {
+        if(!cube_map){
+            return background_color;
+        }
+        return cube_map->operator()(dir);
     }
 
     int getNumLights() const {
@@ -78,6 +82,7 @@ private:
     Curve* parseBsplineCurve();
     RevSurface* parseRevSurface();
 
+    CubeMap* parseCubeMap();
     Mesh* parseSceneGroup();
 
     int getToken(char token[MAX_PARSER_TOKEN_LENGTH]);
@@ -96,6 +101,8 @@ private:
     Material **materials;
     Material *current_material;
     Group *group;
+    Vector3f ambient_light;
+    CubeMap* cube_map;
 };
 
 #endif // SCENE_PARSER_H
